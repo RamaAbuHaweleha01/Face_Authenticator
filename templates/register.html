@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Face Authentication System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <a href="/" style="position: absolute; top: 20px; left: 20px; color: var(--gray-color); text-decoration: none;">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+        
+        <h1>
+            <i class="fas fa-user-plus"></i>
+            Register New User
+        </h1>
+        <p class="subtitle">Create your biometric identity</p>
+        
+        <div class="progress-bar" id="progressBar" style="display: none;">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="username">
+                    <i class="fas fa-user"></i> Username:
+                </label>
+                <input type="text" id="username" name="username" placeholder="Enter your username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="user_id">
+                    <i class="fas fa-id-card"></i> 4-Digit User ID:
+                </label>
+                <input type="text" id="user_id" name="user_id" pattern="\d{4}" maxlength="4" 
+                       placeholder="Enter 4-digit ID" required>
+                <small style="color: var(--gray-color); font-size: 12px;">This will be your unique identifier</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="role">
+                    <i class="fas fa-briefcase"></i> Role:
+                </label>
+                <select id="role" name="role" required>
+                    <option value="">Select your role</option>
+                    <option value="admin">👑 Admin</option>
+                    <option value="user">👤 User</option>
+                    <option value="manager">📊 Manager</option>
+                    <option value="guest">🚪 Guest</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+                <i class="fas fa-camera"></i> Start Face Registration
+            </button>
+        </form>
+        
+        <div id="message" class="message"></div>
+        
+        <div class="camera-instructions" id="instructions">
+            <h4><i class="fas fa-camera-retro"></i> Registration Process</h4>
+            <ul>
+                <li>Click "Start Face Registration" to begin</li>
+                <li>A camera window will open - allow access</li>
+                <li>Look at the camera and hold still</li>
+                <li>We'll capture 20 different angles of your face</li>
+                <li>Keep your face centered and well-lit</li>
+                <li>Press 'Q' to cancel if needed</li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="loadingModal" class="modal">
+        <div class="modal-content">
+            <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: var(--primary-color);"></i>
+            <h3>Processing Registration</h3>
+            <p>Please wait while we process your facial data...</p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('registerForm');
+        const messageDiv = document.getElementById('message');
+        const submitBtn = document.getElementById('submitBtn');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const loadingModal = document.getElementById('loadingModal');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                username: document.getElementById('username').value,
+                user_id: document.getElementById('user_id').value,
+                role: document.getElementById('role').value
+            };
+            
+            // Validate form
+            if (!formData.username || !formData.user_id || !formData.role) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            if (!/^\d{4}$/.test(formData.user_id)) {
+                showMessage('User ID must be exactly 4 digits', 'error');
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            showMessage('Starting face capture. Please look at the camera...', 'loading');
+            progressBar.style.display = 'block';
+            
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    progressFill.style.width = '100%';
+                    showMessage(`✓ ${result.message}`, 'success');
+                    
+                    // Show success modal
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    showMessage(`✗ ${result.message}`, 'error');
+                    progressFill.style.width = '0%';
+                }
+            } catch (error) {
+                showMessage(`✗ Error: ${error.message}`, 'error');
+                progressFill.style.width = '0%';
+            } finally {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+                
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                }, 1000);
+            }
+        });
+        
+        function showMessage(text, type) {
+            messageDiv.innerHTML = `<div class="${type}">${text}</div>`;
+            
+            // Auto-hide after 5 seconds for success/error
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    const msgElement = messageDiv.querySelector(`.${type}`);
+                    if (msgElement) {
+                        msgElement.style.opacity = '0';
+                        setTimeout(() => {
+                            if (messageDiv.innerHTML.includes(msgElement.outerHTML)) {
+                                messageDiv.innerHTML = '';
+                            }
+                        }, 300);
+                    }
+                }, 5000);
+            }
+            
+            // Animate progress bar for loading
+            if (type === 'loading') {
+                let width = 0;
+                const interval = setInterval(() => {
+                    if (width >= 90) {
+                        clearInterval(interval);
+                    } else {
+                        width += 10;
+                        progressFill.style.width = width + '%';
+                    }
+                }, 300);
+            }
+        }
+        
+        // Add input validation feedback
+        const userIdInput = document.getElementById('user_id');
+        userIdInput.addEventListener('input', function() {
+            if (this.value.length === 4 && /^\d+$/.test(this.value)) {
+                this.style.borderColor = 'var(--success-color)';
+            } else if (this.value.length > 0) {
+                this.style.borderColor = 'var(--error-color)';
+            } else {
+                this.style.borderColor = '#e0e0e0';
+            }
+        });
+    </script>
+</body>
+</html>

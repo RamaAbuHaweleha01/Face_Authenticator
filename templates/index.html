@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Authentication System - Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-number" id="userCount">0</div>
+                <div class="stat-label">Registered Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="todayVerifications">0</div>
+                <div class="stat-label">Today's Verifications</div>
+            </div>
+        </div>
+
+        <h1>
+            <i class="fas fa-face-smile"></i>
+            Face Authentication System
+        </h1>
+        <p class="subtitle">Secure biometric authentication using facial recognition</p>
+        
+        <div class="button-container">
+            <a href="/register" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i>
+                Register New User
+            </a>
+            <a href="/verify" class="btn btn-secondary">
+                <i class="fas fa-fingerprint"></i>
+                Verify Identity
+            </a>
+        </div>
+
+        <div class="camera-instructions" style="margin-top: 30px;">
+            <h4><i class="fas fa-info-circle"></i> Quick Tips</h4>
+            <ul>
+                <li>Ensure good lighting conditions</li>
+                <li>Look directly at the camera</li>
+                <li>Remove glasses or masks if possible</li>
+                <li>Keep your face centered in frame</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Fetch and display statistics
+        async function loadStats() {
+            try {
+                const response = await fetch('/users');
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('userCount').textContent = data.users.length;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        loadStats();
+        
+        // Auto-refresh stats every 30 seconds
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+</html>

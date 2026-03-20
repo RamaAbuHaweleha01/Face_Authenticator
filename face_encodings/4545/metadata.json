@@ -1,0 +1,13 @@
+{
+  "user_id": "4545",
+  "num_samples": 20,
+  "model_path": "face_models\\user_4545.yml",
+  "saved_faces": [
+    "face_encodings\\4545\\face_0.jpg",
+    "face_encodings\\4545\\face_1.jpg",
+    "face_encodings\\4545\\face_2.jpg",
+    "face_encodings\\4545\\face_3.jpg",
+    "face_encodings\\4545\\face_4.jpg"
+  ],
+  "created_at": "2026-03-20T10:53:27.757658"
+}
